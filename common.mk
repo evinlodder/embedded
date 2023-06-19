@@ -55,13 +55,14 @@
 # STANDARD PROGRAMS
 #
 PREFIX=~/arm-gnu-12.2/bin/arm-none-eabi
-IPATH=include/
+IPATH=$(ROOT)include/
 
 CC=$(PREFIX)-gcc
 CXX=$(PREFIX)-g++
 GDB=$(PREFIX)-gdb
 AR=$(PREFIX)-ar
 LD=$(PREFIX)-ld
+OBJCOPY=$(PREFIX)-objcopy
 
 #
 # SET TO FALSE IF COMPILING FOR RELEASE
@@ -99,7 +100,9 @@ CFLAGS=-mthumb \
        -Wall \
        -pedantic \
        -DPART_$(PART) \
-       -c
+       -c \
+       -specs=nano.specs \
+       -specs=nosys.specs
 
 #
 # LD FLAGS
@@ -125,11 +128,44 @@ CFLAGS+=$(SPCFLAGS)
 AFLAGS+=-I$(IPATH)
 CFLAGS+=-I$(IPATH)
 
-%.axf:
+AFLAGS+=-I$(IPATH)/drivers/
+CFLAGS+=-I$(IPATH)/drivers/
+
+CXXFLAGS=$(CFLAGS)
+
+LIBS=$(ROOT)lib/libtm4cdrivers.a $(ROOT)lib/libdriver.a
+
+#
+# DRIVER OBJ FILES
+#
+
+P=$(ROOT)include/drivers
+DOBJF=$(P)/rgb.o \
+	  $(P)/buttons.o \
+	  $(P)/rand.o \
+	  $(P)/tick.o \
+
+cleandrivers:
+	rm -rf $(ROOT)include/drivers/*.[o,d] $(ROOT)lib/libtm4cdrivers.a
+
+drivers: cleandrivers $(DOBJF)
+	ar rcs $(ROOT)lib/libtm4cdrivers.a $(filter %.o, $^)
+
+$(PROJNAME).axf: drivers
 	$(LD) \
 	-T $(LINKSCRIPT) \
 	-e $(ENTRYPT) \
+	$(LDFLAGS) \
 	-o $@ \
-	$^ \
+	$(filter %.o %.a, $^) \
+	$(LIBS) \
 	'$(LIBM)' '$(LIBC)' '$(LIBGCC)'
 
+$(PROJNAME).bin: $(PROJNAME).axf
+	$(OBJCOPY) -O binary ${@:.bin=.axf} $@
+
+flash: $(PROJNAME).bin
+	$(LM4FLASH) $<
+
+clean:
+	rm -rf $(PROJNAME).[d,o] $(PROJNAME).axf $(PROJNAME).bin

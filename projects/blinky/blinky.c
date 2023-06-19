@@ -8,10 +8,10 @@
 // Texas Instruments (TI) is supplying this software for use solely and
 // exclusively on TI's microcontroller products. The software is owned by
 // TI and/or its suppliers, and is protected under applicable copyright
-// laws. You may not combine this software with "viral" open-source
+// laws. You may not combine this software with <viral> open-source
 // software in order to form a larger program.
 // 
-// THIS SOFTWARE IS PROVIDED "AS IS" AND WITH ALL FAULTS.
+// THIS SOFTWARE IS PROVIDED <AS IS> AND WITH ALL FAULTS.
 // NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT
 // NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 // A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. TI SHALL NOT, UNDER ANY
@@ -25,19 +25,20 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "inc/hw_memmap.h"
-#include "driverlib/debug.h"
-#include "driverlib/gpio.h"
-#include "driverlib/sysctl.h"
-#include "inc/hw_types.h"
-#include "inc/hw_timer.h"
-#include "inc/hw_ints.h"
-#include "driverlib/rom.h"
-#include "driverlib/rom_map.h"
-#include "driverlib/pin_map.h"
-#include "driverlib/timer.h"
-#include "driverlib/interrupt.h"
-#include "drivers/rgb.h"
+#include <hw_memmap.h>
+#include <driverlib/debug.h>
+#include <driverlib/gpio.h>
+#include <driverlib/sysctl.h>
+#include <hw_types.h>
+#include <hw_timer.h>
+#include <hw_ints.h>
+#include <driverlib/rom.h>
+#include <driverlib/rom_map.h>
+#include <driverlib/pin_map.h>
+#include <driverlib/timer.h>
+#include <driverlib/interrupt.h>
+#include <rgb.h>
+#include <tick.h>
 
 //*****************************************************************************
 //
@@ -62,6 +63,24 @@ __error__(char *pcFilename, uint32_t ui32Line)
 }
 #endif
 
+#define RAND_MAX 32767
+
+static uint32_t next = 1;
+
+int rand(void) {
+    int r;
+
+    next = next * 1103515245 + 12345;
+    r = (int)((next/65536) % ((uint32_t)RAND_MAX + 1));
+    return r;
+}
+
+void srand(unsigned seed) {
+    next = seed;
+}
+
+
+
 //*****************************************************************************
 //
 // Blink the on-board LED.
@@ -73,7 +92,6 @@ main(void)
     volatile uint32_t ui32Loop;
 
     volatile uint32_t colors[3];
-
 
     //
     // Enable the GPIO port that is used for the on-board LED.
@@ -93,6 +111,8 @@ main(void)
     //
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
 
+    tick_init();
+
     RGBInit(1);
     RGBIntensitySet(1.0);
 
@@ -101,34 +121,16 @@ main(void)
     //
     while(1)
     {
-        colors[0] = 500;
-        colors[1] = 250;
-        colors[2] = 500;
+        colors[0] = rand();
+        colors[1] = rand();
+        colors[2] = rand();
+
         //
         // Turn on the LED and change the color.
         //
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
         RGBColorSet(colors);
 
-
-
-        //
-        // Delay for a bit.
-        //
-        for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
-        {
-        }
-
-        //
-        // Turn off the LED.
-        //
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0x0);
-
-        //
-        // Delay for a bit.
-        //
-        for(ui32Loop = 0; ui32Loop < 200000; ui32Loop++)
-        {
-        }
+        sleep(10);
     }
 }

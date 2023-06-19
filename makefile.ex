@@ -1,5 +1,27 @@
-include common.mk
+#
+# THIS IS AN EXAMPLE PROJECT MAKEFILE
+#
+ROOT=../../
+PROJNAME= # PUT PROJECT NAME HERE
+PART=TM4C123GH6PM # OR ELSE IF USING OTHER BOARD
 
-library: include/drivers/buttons.o include/drivers/rgb.o
-	ar rcs drivers.a include/drivers/buttons.o include/drivers/rgb.o
-startup: gcc/startup.o
+LINKSCRIPT=$(ROOT)/gcc/linker.ld
+ENTRYPT= # PUT ENTRY POINT HERE
+SPCFLAGS= # PUT PROJECT-SPECIFIC CFLAGS HERE
+
+#
+# INCLUDE COMMON DEFINITIONS
+#
+include $(ROOT)/common.mk
+
+#
+# DEFINE RULES TO BUILD
+#
+$(PROJNAME).axf: # PUT BUILD FILES HERE
+
+
+#
+# ADD LIB OBJECT FILES NEEDED HERE
+#
+$(PROJNAME).axf: # PUT LIB FILES HERE
+
