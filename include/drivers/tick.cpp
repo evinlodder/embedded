@@ -1,4 +1,4 @@
-#include <tick.h>
+#include <tick>
 #include <tm4c123gh6pm.h>
 
 #define COUNT          0x00010000
@@ -7,7 +7,7 @@
 #define ENABLE_COUNTER 0x00000001
 #define RELOAD_MAX     0x00FFFFFF
 
-void tick_init(void) {
+void vin::tick_init(void) {
     NVIC_ST_CTRL_R = 0; //disable ticks while setting up
     NVIC_ST_RELOAD_R = RELOAD_MAX; //max reload val
     NVIC_ST_CURRENT_R = 0; //any write clears
@@ -15,11 +15,11 @@ void tick_init(void) {
     NVIC_ST_CTRL_R = ENABLE_COUNTER + CLOCK_SOURCE; //enable core clock
 }
 
-void sleep(uint32_t ms) {
-    sleep_ticks(ms * 80000);
+void vin::sleep(uint32_t ms) {
+    vin::sleep_ticks(ms * 80000);
 }
 
-void sleep_ticks(uint32_t ticks) {
+void vin::sleep_ticks(uint32_t ticks) {
     volatile uint32_t elapsed = 0;
     uint32_t start = NVIC_ST_CURRENT_R;
 

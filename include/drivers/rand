@@ -1,0 +1,14 @@
+#ifndef RAND_H
+#define RAND_H
+
+#include <cstdint>
+
+namespace vin {
+    uint8_t rand8();
+    uint16_t rand16();
+    uint32_t rand32();
+    uint64_t rand64();
+    void srand(unsigned seed);
+}
+
+#endif

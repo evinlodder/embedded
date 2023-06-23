@@ -38,7 +38,8 @@
 #include <driverlib/timer.h>
 #include <driverlib/interrupt.h>
 #include <rgb.h>
-#include <tick.h>
+#include <vin>
+#include <buttons.h>
 
 //*****************************************************************************
 //
@@ -63,29 +64,12 @@ __error__(char *pcFilename, uint32_t ui32Line)
 }
 #endif
 
-#define RAND_MAX 32767
-
-static uint32_t next = 1;
-
-int rand(void) {
-    int r;
-
-    next = next * 1103515245 + 12345;
-    r = (int)((next/65536) % ((uint32_t)RAND_MAX + 1));
-    return r;
-}
-
-void srand(unsigned seed) {
-    next = seed;
-}
-
-
-
 //*****************************************************************************
 //
 // Blink the on-board LED.
 //
 //*****************************************************************************
+
 int
 main(void)
 {
@@ -111,19 +95,38 @@ main(void)
     //
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
 
-    tick_init();
+    vin::tick_init();
 
     RGBInit(1);
     RGBIntensitySet(1.0);
+
+    ButtonsInit();
+
+    uint8_t changed = 0;
+    uint8_t buttons = 0;
 
     //
     // Loop forever.
     //
     while(1)
     {
-        colors[0] = rand();
-        colors[1] = rand();
-        colors[2] = rand();
+        ButtonsPoll(&changed, &buttons);
+
+        if(buttons & LEFT_BUTTON) {
+            colors[0] = 0xFFFE;
+            colors[1] = 0xFFFE;
+            colors[2] = 0xFFFE;
+        }
+        else if(buttons & RIGHT_BUTTON) {
+            colors[0] = 0;
+            colors[1] = 0;
+            colors[2] = 0;
+        }
+        else {
+            colors[0] = vin::rand32() % 0xFFFF;
+            colors[1] = vin::rand32() % 0xFFFF;
+            colors[2] = vin::rand32() % 0xFFFF;
+        }
 
         //
         // Turn on the LED and change the color.
@@ -131,6 +134,6 @@ main(void)
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
         RGBColorSet(colors);
 
-        sleep(10);
+        vin::sleep(200);
     }
 }

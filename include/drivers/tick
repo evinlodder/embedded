@@ -1,0 +1,14 @@
+#ifndef TICK_H
+#define TICK_H
+
+#include <cstdint>
+
+namespace vin {
+    extern "C" {
+        void tick_init();
+        void sleep(uint32_t);
+        void sleep_ticks(uint32_t);
+    }
+}
+
+#endif

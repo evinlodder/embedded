@@ -1,0 +1,7 @@
+#ifndef VIN_H
+#define VIN_H
+
+#include <tick>
+#include <rand>
+
+#endif

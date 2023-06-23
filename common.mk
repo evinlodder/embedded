@@ -132,6 +132,8 @@ AFLAGS+=-I$(IPATH)/drivers/
 CFLAGS+=-I$(IPATH)/drivers/
 
 CXXFLAGS=$(CFLAGS)
+CXXFLAGS+=-fno-exceptions
+CXXFLAGS+=-fno-rtti
 
 LIBS=$(ROOT)lib/libtm4cdrivers.a $(ROOT)lib/libdriver.a
 
@@ -140,10 +142,7 @@ LIBS=$(ROOT)lib/libtm4cdrivers.a $(ROOT)lib/libdriver.a
 #
 
 P=$(ROOT)include/drivers
-DOBJF=$(P)/rgb.o \
-	  $(P)/buttons.o \
-	  $(P)/rand.o \
-	  $(P)/tick.o \
+include $(ROOT)/driverobjects.mk
 
 cleandrivers:
 	rm -rf $(ROOT)include/drivers/*.[o,d] $(ROOT)lib/libtm4cdrivers.a
@@ -164,8 +163,8 @@ $(PROJNAME).axf: drivers
 $(PROJNAME).bin: $(PROJNAME).axf
 	$(OBJCOPY) -O binary ${@:.bin=.axf} $@
 
-flash: $(PROJNAME).bin
-	$(LM4FLASH) $<
+flash: clean $(PROJNAME).bin
+	sudo $(LM4FLASH) $(PROJNAME).bin
 
 clean:
 	rm -rf $(PROJNAME).[d,o] $(PROJNAME).axf $(PROJNAME).bin
