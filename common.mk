@@ -163,8 +163,12 @@ $(PROJNAME).axf: drivers
 $(PROJNAME).bin: $(PROJNAME).axf
 	$(OBJCOPY) -O binary ${@:.bin=.axf} $@
 
+include $(ROOT)/password.mk
+
 flash: clean $(PROJNAME).bin
-	sudo $(LM4FLASH) $(PROJNAME).bin
+	# I'm aware this is piss poor practice, but it's annoying me that I can't use nvim commands and idk another workaround
+	#
+	echo $(PASSWORD) | sudo -S $(LM4FLASH) $(PROJNAME).bin
 
 clean:
 	rm -rf $(PROJNAME).[d,o] $(PROJNAME).axf $(PROJNAME).bin

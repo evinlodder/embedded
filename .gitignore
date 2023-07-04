@@ -2,3 +2,5 @@
 *.d
 *.axf
 *.bin
+password.mk
+tags
