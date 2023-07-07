@@ -132,6 +132,7 @@ AFLAGS+=-I$(IPATH)/drivers/
 CFLAGS+=-I$(IPATH)/drivers/
 
 CXXFLAGS=$(CFLAGS)
+CXXFLAGS+=-std=c++20
 CXXFLAGS+=-fno-exceptions
 CXXFLAGS+=-fno-rtti
 
