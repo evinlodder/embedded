@@ -1,0 +1,27 @@
+#
+# THIS IS AN EXAMPLE PROJECT MAKEFILE
+#
+ROOT=../../
+PROJNAME=lab6
+PART=TM4C123GH6PM
+
+LINKSCRIPT=$(ROOT)/gcc/linker.ld
+ENTRYPT=ResetISR
+SPCFLAGS=-DTARGET_IS_TM4C123_RB1
+
+#
+# INCLUDE COMMON DEFINITIONS
+#
+include $(ROOT)/common.mk
+
+#
+# DEFINE RULES TO BUILD
+#
+$(PROJNAME).axf: $(PROJNAME).o
+$(PROJNAME).axf: $(ROOT)gcc/startup.o
+
+#
+# ADD LIB OBJECT FILES NEEDED HERE
+#
+$(PROJNAME).axf: $(ROOT)include/drivers/rgb.o
+

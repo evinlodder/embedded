@@ -16,7 +16,7 @@ void vin::tick_init(void) {
 }
 
 void vin::sleep(uint32_t ms) {
-    vin::sleep_ticks(ms * 80000);
+    vin::sleep_ticks(ms * 8000);
 }
 
 void vin::sleep_ticks(uint32_t ticks) {

@@ -1,0 +1,362 @@
+#ifndef _PORT__
+#define _PORT__
+
+#ifndef __cplusplus
+#error "<port> is a C++ header!"
+#endif
+
+#include <initializer_list>
+
+//************************************************************************************
+//
+// <port> is a c++ header that allows fast, easy-to-use functionality to interface
+// with ports on the TM4C123GH6PM CPU (maybe more in the future)
+//
+// created by Evin Lodder, 7/5/2023
+//
+//************************************************************************************
+
+namespace port {
+
+enum class portname : uint32_t {
+    A = 0x40004000,
+    B = 0x40005000,
+    C = 0x40006000,
+    D = 0x40007000,
+    E = 0x40024000,
+    F = 0x40025000,
+};
+
+enum class clockreg: uint32_t {
+    rcgcgpio = 0x400FE608,
+    scgcgpio = 0x400FE708,
+    dcgcgpio = 0x400FE808,
+};
+
+class __regbase__ {
+public:
+    uint32_t data {};
+    uint32_t offset {};
+};
+
+template<uint8_t dt>
+class dir : public __regbase__ {
+public:
+    constexpr dir() { data = dt; offset = 0x400; }
+};
+
+template<uint8_t dt>
+class is : public __regbase__ {
+public:
+    constexpr is() { data = dt; offset = 0x404; }
+};
+
+template<uint8_t dt>
+class ibe : public __regbase__ {
+public:
+    constexpr ibe() { data = dt; offset = 0x408; }
+};
+
+template<uint8_t dt>
+class iev : public __regbase__ {
+public:
+    constexpr iev() { data = dt; offset = 0x40C; }
+};
+
+template<uint8_t dt>
+class im : public __regbase__ {
+public:
+    constexpr im() { data = dt; offset = 0x410; }
+};
+
+template<uint8_t dt>
+class ris : public __regbase__ {
+public:
+    constexpr ris() { data = dt; offset = 0x414; }
+};
+
+template<uint8_t dt>
+class mis : public __regbase__ {
+public:
+    constexpr mis() { data = dt; offset = 0x418; }
+};
+
+
+template<uint8_t dt>
+class icr : public __regbase__ {
+public:
+    constexpr icr() { data = dt; offset = 0x41C; }
+};
+
+
+template<uint8_t dt>
+class afsel : public __regbase__ {
+public:
+    constexpr afsel() { data = dt; offset = 0x420; }
+};
+
+
+template<uint8_t dt>
+class dr2r : public __regbase__ {
+public:
+    constexpr dr2r() { data = dt; offset = 0x500; }
+};
+
+
+template<uint8_t dt>
+class dr4r : public __regbase__ {
+public:
+    constexpr dr4r() { data = dt; offset = 0x504; }
+};
+
+
+template<uint8_t dt>
+class dr8r : public __regbase__ {
+public:
+    constexpr dr8r() { data = dt; offset = 0x508; }
+};
+
+
+template<uint8_t dt>
+class odr : public __regbase__ {
+public:
+    constexpr odr() { data = dt; offset = 0x50C; }
+};
+
+
+template<uint8_t dt>
+class pur : public __regbase__ {
+public:
+    constexpr pur() { data = dt; offset = 0x510; }
+};
+
+
+template<uint8_t dt>
+class pdr : public __regbase__ {
+public:
+    constexpr pdr() { data = dt; offset = 0x514; }
+};
+
+
+template<uint8_t dt>
+class slr : public __regbase__ {
+public:
+    constexpr slr() { data = dt; offset = 0x518; }
+};
+
+
+template<uint8_t dt>
+class den : public __regbase__ {
+public:
+    constexpr den() { data = dt; offset = 0x51C; }
+};
+
+
+template<uint32_t dt>
+class lock : public __regbase__ {
+public:
+    constexpr lock() { data = dt; offset = 0x520; }
+};
+
+
+template<uint8_t dt>
+class cr : public __regbase__ {
+public:
+    constexpr cr() { data = dt; offset = 0x524; }
+};
+
+
+template<uint8_t dt>
+class amsel : public __regbase__ {
+public:
+    constexpr amsel() { data = dt; offset = 0x528; }
+};
+
+
+template<uint8_t dt>
+class pctl : public __regbase__ {
+public:
+    constexpr pctl() { data = dt; offset = 0x52C; }
+};
+
+
+template<uint8_t dt>
+class adcctl : public __regbase__ {
+public:
+    constexpr adcctl() { data = dt; offset = 0x530; }
+};
+
+
+template<uint8_t dt>
+class dmactl : public __regbase__ {
+public:
+    constexpr dmactl() { data = dt; offset = 0x534; }
+};
+
+
+template<uint8_t dt>
+class periphid4 : public __regbase__ {
+public:
+    constexpr periphid4() { data = dt; offset = 0xFD0; }
+};
+
+
+template<uint8_t dt>
+class periphid5 : public __regbase__ {
+public:
+    constexpr periphid5() { data = dt; offset = 0xFD4; }
+};
+
+
+template<uint8_t dt>
+class periphid6 : public __regbase__ {
+public:
+    constexpr periphid6() { data = dt; offset = 0xFD8; }
+};
+
+
+template<uint8_t dt>
+class periphid7 : public __regbase__ {
+public:
+    constexpr periphid7() { data = dt; offset = 0xFDC; }
+};
+
+
+template<uint8_t dt>
+class periphid0 : public __regbase__ {
+public:
+    constexpr periphid0() { data = dt; offset = 0xFE0; }
+};
+
+
+template<uint8_t dt>
+class periphid1 : public __regbase__ {
+public:
+    constexpr periphid1() { data = dt; offset = 0xFE4; }
+};
+
+
+template<uint8_t dt>
+class periphid2 : public __regbase__ {
+public:
+    constexpr periphid2() { data = dt; offset = 0xFE8; }
+};
+
+
+template<uint8_t dt>
+class periphid3 : public __regbase__ {
+public:
+    constexpr periphid3() { data = dt; offset = 0xFEC; }
+};
+
+
+template<uint8_t dt>
+class pcellid0 : public __regbase__ {
+public:
+    constexpr pcellid0() { data = dt; offset = 0xFF0; }
+};
+
+
+template<uint8_t dt>
+class pcellid1 : public __regbase__ {
+public:
+    constexpr pcellid1() { data = dt; offset = 0xFF4; }
+};
+
+
+template<uint8_t dt>
+class pcellid2 : public __regbase__ {
+public:
+    constexpr pcellid2() { data = dt; offset = 0xFF8; }
+};
+
+
+template<uint8_t dt>
+class pcellid3 : public __regbase__ {
+public:
+    constexpr pcellid3() { data = dt; offset = 0xFFC; }
+};
+
+template<portname name>
+class port_t {
+public:
+    //empty ctor
+    constexpr port_t() {}
+
+    //gets data of the port (GPIODATA)
+    //there will be two forms:
+    // 1. no parameters- returns full 8-bit data
+    // 2. multiple template parameters- returns bit-addressed data
+    uint32_t& data() {
+        return *((uint32_t*)m_port_base);
+    }
+    template<typename... Args>
+    uint32_t& data(Args... nums) {
+        return *((uint32_t*)(m_port_base + offset(nums...)));
+    }
+
+    //initializes the port
+    //Given an std::initializer_list of registers,
+    //initializes the port in that order.
+    //You must also specify which clocks you want to program- default is just RCGCGPIO
+    constexpr void initialize(const std::initializer_list<__regbase__>& regs,
+                              const std::initializer_list<clockreg>& clocks = { clockreg::rcgcgpio }) {
+        volatile uint32_t delay{};
+        //set all clocks, delay at end to give time
+        for(auto& clock : clocks) {
+            switch(name) {
+                case portname::A:
+                    *((uint32_t*)(static_cast<uint32_t>(clock))) |= 1;
+                    break;
+                case portname::B:
+                    *((uint32_t*)(static_cast<uint32_t>(clock))) |= 1 << 1;
+                    break;
+                case portname::C:
+                    *((uint32_t*)(static_cast<uint32_t>(clock))) |= 1 << 2;
+                    break;
+                case portname::D:
+                    *((uint32_t*)(static_cast<uint32_t>(clock))) |= 1 << 3;
+                    break;
+                case portname::E:
+                    *((uint32_t*)(static_cast<uint32_t>(clock))) |= 1 << 4;
+                    break;
+                case portname::F:
+                    *((uint32_t*)(static_cast<uint32_t>(clock))) |= 1 << 5;
+                    break;
+            }
+            delay = *((uint32_t*)(static_cast<uint32_t>(clock)));
+        }
+        //set all registers
+        for(auto& reg : regs) {
+            *((uint32_t*)(m_port_base + reg.offset)) |= reg.data;
+        }
+    }
+
+private:
+    uint32_t m_port_base {static_cast<uint32_t>(name)};
+    //helper function to get offset sum of bit-addressed address.
+    // For each bit, you add 4 * 2^n to the base address.
+    // If you want multiple bits, like bits 2, 5, and 6, you just add the offsets
+    template<typename... Args>
+    constexpr uint16_t offset(Args... nums) {
+        uint16_t sum{};
+        ([&] {
+            sum += (4 * pow(2, nums));
+         }(), ...);
+        return sum;
+    }
+    //pow helper function -- TODO: make math lib
+    template<typename T>
+    constexpr T pow(T base, T exponent) {
+        T solution{base};
+        for(std::size_t i{1}; i < exponent; ++i) {
+            solution *= base;
+        }
+        return solution;
+    }
+};
+
+
+}
+
+#endif
