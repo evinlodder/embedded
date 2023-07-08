@@ -20,13 +20,25 @@
 //
 //************************************************************************************
 
+namespace port {
+
+//op is used to select the operation for use when setting/clearing registers
+enum class op {
+    OR,
+    ANOT,
+};
+
+}
+
 namespace detail {
     //template for hardware register, with offset, data type, and data member
     template<typename T, uint32_t OFFSET>
         struct regbase {
             T data;
+            port::op operation;
             static constexpr uint32_t offset = OFFSET;
-            constexpr regbase(T dt) : data(dt) {}
+            constexpr regbase(T dt, port::op op) : data(dt), operation(op) {}
+            constexpr regbase(T dt) : data(dt), operation(port::op::OR) {}
             constexpr regbase() = delete;
         };
 }
@@ -241,10 +253,9 @@ public:
     constexpr void initialize(const std::initializer_list<clockreg>& clocks,
                               Args&&... regs
                               ) {
-        //volatile uint32_t delay{}; -> for now, delay seems unnecessary. Will remain commented just in case.
-
         //set all clocks, delay at end to give time
         for(auto clock : clocks) {
+            volatile uint32_t delay;
             switch(name) {
                 case portname::A:
                     *(reinterpret_cast<uint32_t*>(clock)) |= 1;
@@ -265,12 +276,19 @@ public:
                     *(reinterpret_cast<uint32_t*>(clock)) |= 1 << 5;
                     break;
             }
-            //delay = *((uint32_t*)(static_cast<uint32_t>(clock))); testing without
+            delay = *reinterpret_cast<uint32_t*>(clock); //allow time for the clock to start
         }
 
         //set all registers
         ([&](auto&& reg) {
-            *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
+            switch(reg.operation) {
+                case op::OR:
+                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
+                    break;
+                case op::ANOT:
+                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
+                    break;
+            }
         }(std::forward<Args>(regs)), ...);
     }
 
@@ -281,9 +299,15 @@ public:
     constexpr void reconfigure(Args&&... regs) {
         //set all registers
         ([&](auto&& reg) {
-            *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
-        }(std::forward<Args>(regs)), ...);
-    }
+            switch(reg.operation) {
+                case op::OR:
+                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
+                    break;
+                case op::ANOT:
+                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
+                    break;
+            }
+        }(std::forward<Args>(regs)), ...);    }
 #endif
 
 private:

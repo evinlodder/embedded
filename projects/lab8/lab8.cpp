@@ -1,7 +1,7 @@
 //*****************************************************************************
 //
-// lab7.cpp - lab 7 for the UT course.
-// Evin Lodder 7/5
+// lab8.cpp - lab 8 for the UT course.
+// Evin Lodder 7/7
 //
 //*****************************************************************************
 
@@ -22,33 +22,27 @@ main()
     using namespace port;
     //initialize portf and sleeping functionality
     //portf_init();
-    port_t<portname::F> f{};
-    f.initialize({
+    port_t<portname::E> e{};
+    e.initialize({
                     clockreg::rcgcgpio,
                  },
-                    lock{lock_unlock},
-                    cr{0x1F},
-                    amsel{0},
-                    pctl{0},
-                    dir{0xE},
-                    afsel{0},
-                    pur{0x11},
-                    den{0x1F}
+                    amsel{0x3, op::ANOT}, //disable amsel
+                    pctl{0xFF, op::ANOT}, //set to GPIO
+                    dir{0x1, op::ANOT}, //set pe0 to input
+                    dir{0x2}, //set pe1 to output
+                    afsel{0x3, op::ANOT}, //disable alt func
+                    den{0x3} //enable pe0 and pe1
                  );
 
     vin::tick_init();
 
-    f.data(3) |= 1 << 3; //turn LED green (PF3)
+    e.data(1) |= 1 << 1; //turn LED on
     while(true) {
-        if(!(f.data(4) & (1 << 4))) { //if PF4 == 0 (switch is pressed)
-            f.data(3) &= ~(1 << 3); //turn off green LED
-            vin::sleep(10); //wait 10 ms
-            while(!(f.data(4) & (1 << 4))) {} //wait until switch is released
-            vin::sleep(250); //wait 250 ms
-            f.data(1) |= 1 << 1; //turn LED red (PF1) (VT on)
-            vin::sleep(250); //wait 250 more ms
-            f.data(1) &= ~(1 << 1); // turn off red LED (VT off)
-            f.data(3) |= 1 << 3; //turn ready back on
+        vin::sleep(100);
+        if(e.data(0) & 1) { //if switch is pressed
+            e.data(1) ^= 1 << 1; //toggle switch
+        } else {
+            e.data(1) |= 1 << 1; //turn LED on
         }
     }
 }
