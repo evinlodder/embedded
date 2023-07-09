@@ -26,11 +26,11 @@ main()
     e.initialize({
                     clockreg::rcgcgpio,
                  },
-                    amsel{0x3, op::ANOT}, //disable amsel
-                    pctl{0xFF, op::ANOT}, //set to GPIO
-                    dir{0x1, op::ANOT}, //set pe0 to input
+                    amsel{0x3, op::clear}, //disable amsel
+                    pctl{0xFF, op::clear}, //set to GPIO
+                    dir{0x1, op::clear}, //set pe0 to input
                     dir{0x2}, //set pe1 to output
-                    afsel{0x3, op::ANOT}, //disable alt func
+                    afsel{0x3, op::clear}, //disable alt func
                     den{0x3} //enable pe0 and pe1
                  );
 

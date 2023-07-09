@@ -1,5 +1,5 @@
-#ifndef PORT_1f76812a_cc4d_4c47_b317_4e376de899cd
-#define PORT_1f76812a_cc4d_4c47_b317_4e376de899cd
+#ifndef PsetT_1f76812a_cc4d_4c47_b317_4e376de899cd
+#define PsetT_1f76812a_cc4d_4c47_b317_4e376de899cd
 
 #ifndef __cplusplus
 #error "<port> is a C++ header!"
@@ -24,8 +24,8 @@ namespace port {
 
 //op is used to select the operation for use when setting/clearing registers
 enum class op {
-    OR,
-    ANOT,
+    set,
+    clear,
 };
 
 }
@@ -34,12 +34,19 @@ namespace detail {
     //template for hardware register, with offset, data type, and data member
     template<typename T, uint32_t OFFSET>
         struct regbase {
-            T data;
+            using value_type = T;
+            value_type data;
             port::op operation;
             static constexpr uint32_t offset = OFFSET;
-            constexpr regbase(T dt, port::op op) : data(dt), operation(op) {}
-            constexpr regbase(T dt) : data(dt), operation(port::op::OR) {}
+            constexpr regbase(value_type dt, port::op op) : data(dt), operation(op) {}
+            constexpr regbase(value_type dt) : data(dt), operation(port::op::set) {}
             constexpr regbase() = delete;
+        };
+    //concept for sake of narrowing variadic function parameters (namely port_t.initialize and .reconfigure)
+    template<typename T>
+        concept regbase_t = std::is_class_v<T> && requires {
+            typename T::value_type; //value_type is a member of type
+            T::offset; //offset is static member of regbase
         };
 }
 
@@ -249,7 +256,7 @@ public:
     //Given a list of registers,
     //initializes the port in that order.
     //You must also specify which clocks you want to program- normally just RCGCGPIO
-    template<typename... Args>
+    template<detail::regbase_t... Args>
     constexpr void initialize(const std::initializer_list<clockreg>& clocks,
                               Args&&... regs
                               ) {
@@ -282,10 +289,10 @@ public:
         //set all registers
         ([&](auto&& reg) {
             switch(reg.operation) {
-                case op::OR:
+                case op::set:
                     *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
                     break;
-                case op::ANOT:
+                case op::clear:
                     *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
                     break;
             }
@@ -295,15 +302,15 @@ public:
     //reconfigures the port
     //Given a list of registers,
     //reconfigures those registers in that order to their new value
-    template<typename... Args>
+    template<detail::regbase_t... Args>
     constexpr void reconfigure(Args&&... regs) {
         //set all registers
         ([&](auto&& reg) {
             switch(reg.operation) {
-                case op::OR:
+                case op::set:
                     *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
                     break;
-                case op::ANOT:
+                case op::clear:
                     *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
                     break;
             }
