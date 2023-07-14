@@ -12,7 +12,7 @@ uint16_t vin::rand16() {
     return next >> 48;
 }
 
-uint32_t vin::rand32() {
+std::uint32_t vin::rand32() {
     next = next * 1103999945 + 23445;
     return next >> 32;
 }

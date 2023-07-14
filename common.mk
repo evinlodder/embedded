@@ -117,7 +117,8 @@ LIBC:=$(shell $(CC) $(CFLAGS) -print-file-name=libc.a)
 LIBM:=$(shell $(CC) $(CFLAGS) -print-file-name=libm.a)
 
 ifeq ($(DEBUG), true)
-CFLAGS+=-g
+CFLAGS+=-g3
+CFLAGS+=-ggdb
 CFLAGS+=-O0
 else
 CFLAGS+=-O2
@@ -167,9 +168,14 @@ $(PROJNAME).bin: $(PROJNAME).axf
 include $(ROOT)/password.mk
 
 flash: clean $(PROJNAME).bin
-	# I'm aware this is piss poor practice, but it's annoying me that I can't use nvim commands and idk another workaround
+	# I'm aware this is likelypiss poor practice,
+	# but it's annoying me that I can't use nvim commands and idk another workaround
 	#
 	echo $(PASSWORD) | sudo -S $(LM4FLASH) $(PROJNAME).bin
+
+debug: $(PROJNAME).axf
+	echo $(PASSWORD) | sudo -S $(OPENOCD) --file board/ek-tm4c123gxl.cfg &
+	$(GDB) $(PROJNAME).axf
 
 clean:
 	rm -rf $(PROJNAME).[d,o] $(PROJNAME).axf $(PROJNAME).bin

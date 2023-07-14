@@ -10,10 +10,9 @@
 
 //*****************************************************************************
 //
-// Resembles pacemaker, where PF4 = the atrial sensor (AS), the green LED is the ready LED,
-// and the red LED is the ventrical trigger (VT)
-// NOTE: I will not be using the <rgb.h> or <buttons.h> headers because
-// I want to practice interfacing with the hardware and reading the data sheet on my own.
+//  First physical board project
+//  Gets button input from PE0 and sends output to a red LED on PE1
+//  If button is pressed, LED flashes, otherwise it remains solid color
 //
 //*****************************************************************************
 int
@@ -25,14 +24,9 @@ main()
     port_t<portname::E> e{};
     e.initialize({
                     clockreg::rcgcgpio,
-                 },
-                    amsel{0x3, op::clear}, //disable amsel
-                    pctl{0xFF, op::clear}, //set to GPIO
-                    dir{0x1, op::clear}, //set pe0 to input
-                    dir{0x2}, //set pe1 to output
-                    afsel{0x3, op::clear}, //disable alt func
-                    den{0x3} //enable pe0 and pe1
-                 );
+                 });
+
+    e.init_digital_pins(pin0<direction::in>{}, pin1<direction::out>{});
 
     vin::tick_init();
 

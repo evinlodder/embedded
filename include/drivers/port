@@ -20,7 +20,7 @@
 //
 //************************************************************************************
 
-namespace port {
+namespace vin {
 
 //op is used to select the operation for use when setting/clearing registers
 enum class op {
@@ -28,36 +28,81 @@ enum class op {
     clear,
 };
 
+//direction is used to select the direction of a pin for its initialization
+enum direction {
+    in,
+    out,
+};
+
 }
 
 namespace detail {
     //template for hardware register, with offset, data type, and data member
-    template<typename T, uint32_t OFFSET>
+    template<typename T, std::uint32_t OFFSET>
         struct regbase {
             using value_type = T;
             value_type data;
-            port::op operation;
-            static constexpr uint32_t offset = OFFSET;
-            constexpr regbase(value_type dt, port::op op) : data(dt), operation(op) {}
-            constexpr regbase(value_type dt) : data(dt), operation(port::op::set) {}
+            vin::op operation;
+            static constexpr std::uint32_t offset = OFFSET;
+            constexpr regbase(value_type dt, vin::op op) : data(dt), operation(op) {}
+            constexpr regbase(value_type dt) : data(dt), operation(vin::op::set) {}
             constexpr regbase() = delete;
         };
     //concept for sake of narrowing variadic function parameters (namely port_t.initialize and .reconfigure)
     template<typename T>
-        concept regbase_t = std::is_class_v<T> && requires {
+        concept regbase_v = std::is_class_v<T> && requires {
             typename T::value_type; //value_type is a member of type
             T::offset; //offset is static member of regbase
         };
+#if defined(TARGET_IS_TM4C123_RB1)
+    //template for initializing certain GPIO pins
+    template<uint8_t num, vin::direction dir>
+        struct pin {
+            static_assert((0 <= num && num < 8), "pin numbers can only be 0-7");
+            constexpr pin() = default;
+            static constexpr uint8_t pin_num = num;
+            static constexpr vin::direction direc = dir;
+        };
+    //concept for sake of narrowing function parameters (namely port_t.init_digital_pins and .reconfig_...)
+    template<typename T>
+        concept pin_v = std::is_same_v<T, pin<T::pin_num, T::direc>>;
+
+#endif
 }
 
-namespace port {
+namespace vin {
+
+//GPIO pins 0-7
+template<direction dir>
+using pin0 = detail::pin<0, dir>;
+
+template<direction dir>
+using pin1 = detail::pin<1, dir>;
+
+template<direction dir>
+using pin2 = detail::pin<2, dir>;
+
+template<direction dir>
+using pin3 = detail::pin<3, dir>;
+
+template<direction dir>
+using pin4 = detail::pin<4, dir>;
+
+template<direction dir>
+using pin5 = detail::pin<5, dir>;
+
+template<direction dir>
+using pin6 = detail::pin<6, dir>;
+
+template<direction dir>
+using pin7 = detail::pin<7, dir>;
 
 #if defined(TARGET_IS_TM4C123_RB1)
 #define BIT_SPECIFIC_ADDRESSING_RB1 1
 // portname enum
 // the underlying values are all of the base addresses of the ports
 // according to the TI microcontroller datasheet
-enum portname : uint32_t {
+enum portname : std::uint32_t {
     A = 0x40004000,
     B = 0x40005000,
     C = 0x40006000,
@@ -73,7 +118,7 @@ enum portname : uint32_t {
 //  dcgcgpio- general-purpose deep-sleep mode clock
 //   -deep-sleep mode stops system clock and switches off pll and flash
 //  the underlying values are the base addresses of the registers according to the datasheet
-enum clockreg: uint32_t {
+enum clockreg: std::uint32_t {
     rcgcgpio = 0x400FE608,
     scgcgpio = 0x400FE708,
     dcgcgpio = 0x400FE808,
@@ -147,8 +192,8 @@ using den = detail::regbase<uint8_t, 0x51C>;
 //For reading the register:
 // 0x1 means the GPIOCR register is locked
 // 0x0 means the GPIOCR register is unlocked
-constexpr uint32_t lock_unlock {0x4C4F434B};
-using lock = detail::regbase<uint32_t, 0x520>;
+constexpr std::uint32_t lock_unlock {0x4C4F434B};
+using lock = detail::regbase<std::uint32_t, 0x520>;
 
 //commit register- 1 means corresponding GPIOAFSEL, GPIOPUR, GPIODPDR, or GPIODEN can be written,
 //0 means they can't be written
@@ -163,7 +208,7 @@ using amsel = detail::regbase<uint8_t, 0x528>;
 //when using alternate function mode. See page 1351 in the datasheet for defined encodings for the bit fields.
 //note- bits 0-3 are used for pin 0, 4-7 for pin 1, and so on.
 //note 2- some pins have special consideration, see page 688 in the datasheet
-using pctl = detail::regbase<uint32_t, 0x52C>;
+using pctl = detail::regbase<std::uint32_t, 0x52C>;
 
 //ADC control register- 1 means pin is used to trigger the ADC, 0 means pin isn't
 using adcctl = detail::regbase<uint8_t, 0x530>;
@@ -227,104 +272,153 @@ using pcellid2 = detail::regbase<uint8_t, 0xFF8>;
 using pcellid3 = detail::regbase<uint8_t, 0xFFC>;
 #endif
 
-//port_t class to manage ports
+//port class to manage ports
 // -provides data access
 // -provides initialization
 template<portname name>
-class port_t {
+class port {
 public:
     //empty ctor
-    constexpr port_t() = default;
+    constexpr port() = default;
 
 #if defined(TARGET_IS_TM4C123_RB1)
     //gets data of the port (GPIODATA)
     //there will be two forms:
     // 1. no parameters- returns full 8-bit data
     // 2. multiple template parameters- returns bit-addressed data
-    uint32_t& data() {
+    inline std::uint32_t& data() {
         return data(0, 1, 2, 3, 4, 5, 6, 7);
     }
     template<std::integral... Args>
-    uint32_t& data(Args... nums) {
+    inline std::uint32_t& data(Args... nums) {
         if(!((nums >= 0 && nums < 8) && ...)) {
             return data(0, 1, 2, 3, 4, 5, 6, 7);
         }
-        return *reinterpret_cast<uint32_t*>(m_port_base + offset(nums...));
+        return *std::bit_cast<std::uint32_t*>(m_port_base + offset(nums...));
     }
 
     //initializes the port
     //Given a list of registers,
     //initializes the port in that order.
     //You must also specify which clocks you want to program- normally just RCGCGPIO
-    template<detail::regbase_t... Args>
-    constexpr void initialize(const std::initializer_list<clockreg>& clocks,
+    //there will also be a template that just initializes the clock
+    template<detail::regbase_v... Args>
+    constexpr inline void initialize(const std::initializer_list<clockreg>& clocks,
                               Args&&... regs
                               ) {
-        //set all clocks, delay at end to give time
-        for(auto clock : clocks) {
-            volatile uint32_t delay;
-            switch(name) {
-                case portname::A:
-                    *(reinterpret_cast<uint32_t*>(clock)) |= 1;
-                    break;
-                case portname::B:
-                    *(reinterpret_cast<uint32_t*>(clock)) |= 1 << 1;
-                    break;
-                case portname::C:
-                    *(reinterpret_cast<uint32_t*>(clock)) |= 1 << 2;
-                    break;
-                case portname::D:
-                    *(reinterpret_cast<uint32_t*>(clock)) |= 1 << 3;
-                    break;
-                case portname::E:
-                    *(reinterpret_cast<uint32_t*>(clock)) |= 1 << 4;
-                    break;
-                case portname::F:
-                    *(reinterpret_cast<uint32_t*>(clock)) |= 1 << 5;
-                    break;
-            }
-            delay = *reinterpret_cast<uint32_t*>(clock); //allow time for the clock to start
-        }
-
+        initialize(clocks);
         //set all registers
-        ([&](auto&& reg) {
+        ([&](auto&& reg) constexpr {
             switch(reg.operation) {
                 case op::set:
-                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
+                    *std::bit_cast<std::uint32_t*>(m_port_base + reg.offset) |= reg.data;
                     break;
                 case op::clear:
-                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
+                    *std::bit_cast<std::uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
                     break;
             }
         }(std::forward<Args>(regs)), ...);
+    }
+    //solo-clock initialize
+    constexpr inline void initialize(const std::initializer_list<clockreg>& clocks) {
+        //set all clocks, delay at end to give time
+        for(auto clock : clocks) {
+            volatile std::uint32_t delay;
+            switch(name) {
+                case portname::A:
+                    *(std::bit_cast<std::uint32_t*>(clock)) |= 1;
+                    break;
+                case portname::B:
+                    *(std::bit_cast<std::uint32_t*>(clock)) |= 1 << 1;
+                    break;
+                case portname::C:
+                    *(std::bit_cast<std::uint32_t*>(clock)) |= 1 << 2;
+                    break;
+                case portname::D:
+                    *(std::bit_cast<std::uint32_t*>(clock)) |= 1 << 3;
+                    break;
+                case portname::E:
+                    *(std::bit_cast<std::uint32_t*>(clock)) |= 1 << 4;
+                    break;
+                case portname::F:
+                    *(std::bit_cast<std::uint32_t*>(clock)) |= 1 << 5;
+                    break;
+            }
+            delay = *std::bit_cast<std::uint32_t*>(clock); //allow time for the clock to start
+        }
     }
 
     //reconfigures the port
     //Given a list of registers,
     //reconfigures those registers in that order to their new value
-    template<detail::regbase_t... Args>
-    constexpr void reconfigure(Args&&... regs) {
+    template<detail::regbase_v... Args>
+    constexpr inline void reconfigure(Args&&... regs) {
         //set all registers
-        ([&](auto&& reg) {
+        ([&](auto&& reg) constexpr {
             switch(reg.operation) {
                 case op::set:
-                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) |= reg.data;
+                    *std::bit_cast<std::uint32_t*>(m_port_base + reg.offset) |= reg.data;
                     break;
                 case op::clear:
-                    *reinterpret_cast<uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
+                    *std::bit_cast<std::uint32_t*>(m_port_base + reg.offset) &= ~reg.data;
                     break;
             }
-        }(std::forward<Args>(regs)), ...);    }
+        }(std::forward<Args>(regs)), ...);
+    }
+
+    //initializes certain pins to either input or output
+    ////the generic digital GPIO initialization initializes the following register:
+        // -AMSEL to 0
+        // -PCTL to 0
+        // -DIR to either 1 or 0 depending on pin::direction
+        // -AFSEL to 0
+        // -DEN to 1
+    template<detail::pin_v... Pins>
+    constexpr inline void init_digital_pins(const Pins&... pins) {
+        //note: in order to keep this function simple and fast, I won't be initialing any regbase objects.
+        constexpr uint8_t gen_bits = (0 + ... + (1 << pins.pin_num)); //gets the compound value to set for
+                                                                      //most registers
+                                                                      //e.g. (0, 1, 3) -> 0b00001011
+        constexpr std::uint32_t pctl_bits = (0 + ... + (0xF << (pins.pin_num << 2))); //gets compound value to set
+                                                                                 //for PCTL
+                                                                                 //e.g. (0, 1, 3) -> 0x0000F0FF
+        //gets the input pins for the direction register
+        uint8_t dir_clear_bits = (0 + ... +
+                            ([](const auto& pin) constexpr {
+                                if constexpr (pin.direc == direction::in) {
+                                    return 1 << pin.pin_num;
+                                } else {
+                                    return 0;
+                                }
+                           })(pins));
+        //gets the output pins for the direction register
+        uint8_t dir_set_bits = (0 + ... +
+                            ([](const auto& pin) constexpr {
+                                if constexpr (pin.direc == direction::out) {
+                                    return 1 << pin.pin_num;
+                                } else {
+                                    return 0;
+                                }
+                           })(pins));
+
+
+        *std::bit_cast<std::uint32_t*>(m_port_base + 0x528) &= ~gen_bits; //set amsel to 0 for specified bits
+        *std::bit_cast<std::uint32_t*>(m_port_base + 0x52C) &= ~pctl_bits; //set pctl to 0 for specified bits
+        *std::bit_cast<std::uint32_t*>(m_port_base + 0x400) &= ~dir_clear_bits; //set dir to 0 for specified bits(in)
+        *std::bit_cast<std::uint32_t*>(m_port_base + 0x400) |= dir_set_bits; //set dir to 1 for specified bits (out)
+        *std::bit_cast<std::uint32_t*>(m_port_base + 0x420) &= ~gen_bits; //set afsel to 0 for specified bits
+        *std::bit_cast<std::uint32_t*>(m_port_base + 0x51C) |= gen_bits; //set afsel to 0 for specified bits
+    }
 #endif
 
 private:
-    uint32_t m_port_base {name};
+    std::uint32_t m_port_base {name};
 #if defined(BIT_SPECIFIC_ADDRESSING_RB1)
     //helper function to get offset sum of bit-addressed address.
     // For each bit, you add 4 * 2^n to the base address.
     // If you want multiple bits, like bits 2, 5, and 6, you just add the offsets
     template<typename... Args>
-    constexpr uint16_t offset(Args... nums) {
+    constexpr inline uint16_t offset(Args... nums) {
         return (0 + ... + (4 * (1 << nums)));
     }
 #endif

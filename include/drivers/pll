@@ -1,0 +1,47 @@
+#ifndef PLL_706e3b8b_341b_44f9_b3fa_97d8b2d1bd81
+#define PLL_706e3b8b_341b_44f9_b3fa_97d8b2d1bd81
+
+#ifndef __cplusplus
+#error "<pll> is a C++ header!"
+#endif
+
+namespace detail {
+//contains values for XTAL to use with certain crystal frequencies
+//visit the datasheet on page 256.
+//for now, the only necessary value is xtal_16 since that is the only one i'm using
+#if defined(TARGET_IS_TM4C123_RB1)
+    constexpr std::uint32_t xtal_16 = 0x15; //10101 is the value for 16 mHz crystal
+#endif
+}
+
+#include <reg.hpp>
+
+namespace pll {
+    std::uint32_t clock_mHz = 16;
+    std::uint32_t crystal_xtal = detail::xtal_16;
+    bool enabled = false;
+}
+
+namespace vin {
+    //initializes the PLL with the given clock frequency
+    inline void pll_init(std::uint8_t mHz) {
+        using namespace reg; //for data() and register defs
+        data(sysctl_rcc2_r) |= (1 << 31); //allow use of rcc2
+        data(sysctl_rcc2_r) |= (1 << 11);  //bypass pll
+        data(sysctl_rcc_r)  &= ~(0x1F << 6); //clear xtal
+        data(sysctl_rcc_r)  |= (pll::crystal_xtal << 6); //set to 16 mHz crystal
+        data(sysctl_rcc2_r) &= ~(0x7 << 4); //set OSCSRC to main oscillator
+        data(sysctl_rcc2_r) &= ~(1 << 13); //activate pll
+        data(sysctl_rcc2_r) |= (1 << 30); //set DIV400 bit to use 400 mHz pll
+        data(sysctl_rcc2_r) &= ~(0x7F << 22); //clear divisior
+        data(sysctl_rcc2_r) |= (((400 / mHz) - 1) << 22); //set divisor to desired mHz
+                                                          //(we sub 1 because it divides by n + 1)
+        while(!(data(sysctl_ris) & (1 << 6))) {} //wait until pll is stable
+        data(sysctl_rcc2_r) &= ~(1 << 11); //clear bypass bit
+
+        pll::clock_mHz = mHz;
+        pll::enabled = true;
+    }
+}
+
+#endif

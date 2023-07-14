@@ -1,0 +1,101 @@
+#ifndef DUMP_00751c2f_9722_4976_9642_4c608d7c03b6
+#define DUMP_00751c2f_9722_4976_9642_4c608d7c03b6
+
+#ifndef __cplusplus
+#error "dump.hpp is a C++ header!"
+#endif
+
+#include <array>
+#include <type_traits>
+//dump.hpp allows easy functionality to dump data
+
+namespace vin {
+
+//dump holds data and allows saving data and potentially flashing data in the future
+template<typename T, std::size_t N>
+class dump {
+private:
+    //dump can either take an array or a raw pointer + size
+    enum class tag {pointer, array};
+    tag m_tag;
+
+    union {
+        T* m_ptr;
+        std::array<T, N> m_array;
+    };
+
+    static constexpr std::size_t m_size = N;
+    std::size_t m_next = 0;
+
+public:
+    //like standard size() function
+    constexpr inline std::size_t size() const {
+        return m_size;
+    }
+
+    //delete move constructor
+    constexpr dump(dump&&) = delete;
+
+    //delete move assignment operator
+    constexpr dump& operator=(dump&&) = delete;
+
+    //ptr ctor
+    constexpr dump(T* ptr) : m_tag(tag::pointer), m_ptr(ptr) {
+        //m_ptr = ptr;
+    }
+
+    //array ctor
+    constexpr dump(std::array<T, N>&& arr) : m_tag(tag::array), m_array(arr) {
+        //m_array = array;
+    }
+
+    //save operation
+    // -if we've already reached the capacity, do nothing
+    // -note that an exception would normally be thrown but this is a no-exception environment
+    inline void save(T&& value) {
+        //do nothing if overflow would occur
+        if(m_next == m_size) {
+            return;
+        }
+
+        //set value
+        if(m_tag == tag::pointer) {
+            m_ptr[m_next++] = value;
+        } else {
+            m_array[m_next++] = std::forward<T>(value);
+        }
+    }
+    //second version for lvalues
+    inline void save(const T& value) {
+        //do nothing if overflow would occur
+        if(m_next == m_size) {
+            return;
+        }
+
+        //set value
+        if(m_tag == tag::pointer) {
+            m_ptr[m_next++] = value;
+        } else {
+            m_array[m_next++] = value;
+        }
+    }
+
+    //operation to get data
+    //there is no cont T* variant because this class isn't supposed to be const
+    constexpr T* data() {
+        if constexpr (m_tag == tag::pointer) {
+            return m_ptr;
+        } else {
+            return m_array.data();
+        }
+    }
+};
+
+template<typename T, std::size_t N>
+constexpr auto make_dump() {
+    return dump{std::array<T, N>{}};
+}
+
+}
+
+#endif

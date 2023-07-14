@@ -2,12 +2,28 @@
 #define TICK_H
 
 #include <cstdint>
+#include <pll>
+#include <reg.hpp>
 
 namespace vin {
-    extern "C" {
-        void tick_init();
-        void sleep(uint32_t);
-        void sleep_ticks(uint32_t);
+    //initializes systick with no default reload
+    constexpr inline void tick_init(std::uint32_t reload = 0xFFFFFF) {
+        using namespace reg;
+        data(systick_ctrl_r) = 0; //disable systick while setting up
+        data(systick_ctrl_r) |= 0x5; //set to system clock and enable
+    }
+    //sleeps for a certain number of ticks
+    inline void sleep_ticks(std::uint32_t ticks) {
+        using namespace reg;
+        data(systick_reload_r) = ticks - 1; //set reload val to desired delay
+        data(systick_current_r) = 0; //restart current
+        while(!(data(systick_ctrl_r) & (1 << 16))) {} //wait for count flag to be set
+    }
+    //sleeps for a certain number of ms
+    inline void sleep(std::uint32_t ms) {
+        for(std::size_t i{}; i < ms; ++i) {
+            sleep_ticks(pll::clock_mHz * 1000); //the amount of ticks that equals 1 ms with clock freq
+        }
     }
 }
 

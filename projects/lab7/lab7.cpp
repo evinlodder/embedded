@@ -28,10 +28,11 @@ main()
                  },
                     lock{lock_unlock},
                     cr{0x1F},
-                    amsel{0},
-                    pctl{0},
+                    amsel{0x1F, op::clear},
+                    pctl{0xFFFFF, op::clear},
                     dir{0xE},
-                    afsel{0},
+                    dir{0x11, op::clear},
+                    afsel{0x1F, op::clear},
                     pur{0x11},
                     den{0x1F}
                  );
