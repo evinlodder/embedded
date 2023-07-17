@@ -6,7 +6,7 @@
 //*****************************************************************************
 
 #include <vin>
-#include <port.hpp>
+#include <port>
 
 //*****************************************************************************
 //
@@ -19,10 +19,10 @@
 int
 main()
 {
-    using namespace port;
+    using namespace vin;
     //initialize portf and sleeping functionality
     //portf_init();
-    port_t<portname::F> f{};
+    port<portname::F> f{};
     f.initialize({
                     clockreg::rcgcgpio,
                  },
