@@ -9,7 +9,7 @@
 #include <port>
 #include <array>
 #include <utility>
-#include <fsm.hpp>
+#include <fsm>
 
 //INDECES FOR STATES
 constexpr std::size_t go_west    = 0;
@@ -58,7 +58,7 @@ constexpr state_type states[12] = {
     {blink_6_output,    500,  {go_west, go_west, go_south, go_west, go_walk, go_west, go_south, go_west}}
 };
 
-fsm_type fsm{states};
+constinit fsm_type fsm{states};
 
 //*****************************************************************************
 //
