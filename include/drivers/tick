@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <pll>
-#include <reg.hpp>
+#include <reg>
 
 namespace vin {
     bool tick_enabled = false;

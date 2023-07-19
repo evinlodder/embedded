@@ -14,7 +14,7 @@ namespace detail {
 #endif
 }
 
-#include <reg.hpp>
+#include <reg>
 
 namespace pll {
     std::uint32_t clock_mHz = 16;
