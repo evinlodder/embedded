@@ -26,28 +26,32 @@ public:
     struct state_type {
         OutputType out; //output of this state type
         std::uint32_t delay; //delay at this state
-        std::array<std::size_t, InputCount * InputCount - 1> next; //array of states to work with
+        std::size_t next[InputCount * InputCount - 1]; //array of states to work with
     };
 private:
-    std::array<state_type, StateCount> m_states;
-    state_type m_current_state;
+    state_type m_states[StateCount];
+    std::size_t m_idx = InitialState;
 public:
     constexpr moore_fsm() = delete; //no default ctor
 
     //array constructor initializes m_states to the values in the list
     // note- since there are no exceptions, bound checking won't return anything
     // this will be a likely culprit if there are seg faults.
-    constexpr moore_fsm(std::array<state_type, StateCount> states) : m_states(states),
-                                                                     m_current_state(m_states[InitialState]){}      //returns the output of the current state or zero if initialization failed
+    constexpr moore_fsm(const state_type (&states)[StateCount]) {
+        for(std::size_t i{}; i < StateCount; ++i) {
+            m_states[i] = states[i];
+        }
+    }
+    //returns the output of the current state or zero if initialization failed
     constexpr inline OutputType output() const {
-        return m_current_state.out;
+        return m_states[m_idx].out;
     }
     //wait waits the current state's ms delay
     inline void wait() const {
         if(!vin::tick_enabled) {
             vin::tick_init();
         }
-        vin::sleep(m_current_state.delay);
+        vin::sleep(m_states[m_idx].delay);
     }
     //next progresses the the fsm to the next state given an input
     // -since exceptions are not present, we will return 0 on success and 1 on out-of-bounds
@@ -55,7 +59,7 @@ public:
         if(input > ((2 << InputCount) - 1)) {
             return 1;
         }
-        m_current_state = m_states[m_current_state.next[input]];
+        m_idx = m_states[m_idx].next[input];
         return 0;
     }
 };

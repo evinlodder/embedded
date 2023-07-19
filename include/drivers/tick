@@ -6,12 +6,14 @@
 #include <reg.hpp>
 
 namespace vin {
+    bool tick_enabled = false;
     //initializes systick with no default reload
     constexpr inline void tick_init() {
         using namespace reg;
         data(systick_ctrl_r) = 0; //disable systick while setting up
         data(systick_current_r) = 0; //any write clears
         data(systick_ctrl_r) |= 0x5; //set to system clock and enable
+        tick_enabled = true;
     }
     //sleeps for a certain number of ticks
     inline void sleep_ticks(std::uint32_t ticks) {
